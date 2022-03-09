@@ -1,9 +1,23 @@
 const { ApolloServer, gql } = require("apollo-server");
 const dotenv = require("dotenv");
-const { MongoClient } = require("mongodb");
+const { MongoClient, ObjectId } = require("mongodb");
 const bcrypt = require("bcryptjs");
-
+const jwt = require("jsonwebtoken");
 dotenv.config();
+
+const getToken = (user) =>
+  jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7 days" });
+
+const getUserFromToken = async (token, db) => {
+  if (!token) {
+    return null;
+  }
+  const tokenData = jwt.verify(token, process.env.JWT_SECRET);
+  if (!tokenData?.id) {
+    return null;
+  }
+  return await db.collection("Users").findOne({ _id: ObjectId(tokenData.id) });
+};
 
 const typeDefs = gql`
   type Query {
@@ -71,33 +85,32 @@ const resolvers = {
       };
       // Save data into database
       const result = await db.collection("Users").insertOne(newUser);
-      const id = result.insertedId;
-      const user = await db.collection("Users").findOne({ _id: id });
+      const user = await db
+        .collection("Users")
+        .findOne({ _id: result.insertedId });
+
       return {
         user,
-        token: "token",
+        token: getToken(user),
       };
     },
-    signIn: async(_, {input}, {db}) => {
-      const user = await db.collection("Users").findOne({email: input.email})
-      if(!user){
-        throw new Error('Invalid credentials')
+    signIn: async (_, { input }, { db }) => {
+      const user = await db.collection("Users").findOne({ email: input.email });
+      const isPasswordIsCorrect =
+        user && bcrypt.compareSync(input.password, user.password);
+      if (!user || !isPasswordIsCorrect) {
+        throw new Error("Invalid credentials");
       }
 
-      const isPasswordIsCorrect = bcrypt.compareSync(input.password, user.password)
-      if(!isPasswordIsCorrect){
-        throw new Error('Invalid credentials')
-        
-      }
       return {
         user,
-        token: "token",
-      }
+        token: getToken(user),
+      };
     },
   },
 
   User: {
-    id: ({_id, id}) => {
+    id: ({ _id, id }) => {
       return _id || id;
     },
   },
@@ -111,11 +124,17 @@ const start = async () => {
   await client.connect();
   const db = client.db(process.env.DB_NAME);
 
-  const context = {
-    db,
-  };
-
-  const server = new ApolloServer({ typeDefs, resolvers, context });
+  const server = new ApolloServer({
+    typeDefs,
+    resolvers,
+    context: async ({ req }) => {
+      const user = await getUserFromToken(req.headers.authorization, db);
+      return {
+        db,
+        user,
+      };
+    },
+  });
   try {
     server.listen().then(({ url }) => {
       console.log(`🚀  Server ready at ${url}`);
