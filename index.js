@@ -25,8 +25,11 @@ const typeDefs = gql`
   }
 
   type Mutation {
-    signUp(input: SignUpInput): AuthUser!
-    signIn(input: SignInInput): AuthUser!
+    signUp(input: SignUpInput!): AuthUser!
+    signIn(input: SignInInput!): AuthUser!
+
+    createTaskList(title: String!): TaskList!
+    updateTaskList(id: ID!, title: String!): TaskList!
   }
 
   input SignUpInput {
@@ -50,7 +53,7 @@ const typeDefs = gql`
     id: ID!
     name: String!
     email: String!
-    avatar: String!
+    avatar: String
   }
 
   type TaskList {
@@ -74,7 +77,12 @@ const typeDefs = gql`
 
 const resolvers = {
   Query: {
-    myTaskLists: () => [],
+    myTaskLists: async (_, __, { db, user }) => {
+      return await db
+        .collection("TaskList")
+        .find({ userIds: user._id })
+        .toArray();
+    },
   },
   Mutation: {
     signUp: async (_, { input }, { db }) => {
@@ -107,12 +115,58 @@ const resolvers = {
         token: getToken(user),
       };
     },
+    createTaskList: async (_, { title }, { db, user }) => {
+      if (!user) {
+        throw new Error("Authentication Error. Please sign in");
+      }
+
+      const newTaskList = {
+        title,
+        createdAt: new Date().toISOString(),
+        userIds: [user._id],
+      };
+
+      const result = await db.collection("TaskList").insertOne(newTaskList);
+      const task = await db
+        .collection("TaskList")
+        .findOne({ _id: result.insertedId });
+
+      return task;
+    },
+    updateTaskList: async (_, { id, title }, { db, user }) => {
+      if (!user) {
+        throw new Error("Authentication Error. Please sign in");
+      }
+      const result = await db.collection("TaskList").updateOne(
+        {
+          _id: ObjectId(id),
+        },
+        {
+          $set: {
+            title,
+          },
+        }
+      );
+      console.log(ObjectId(id))
+      console.log(result)
+      return await db.collection("TaskList").findOne({ _id: ObjectId(id) });
+    },
   },
 
   User: {
     id: ({ _id, id }) => {
       return _id || id;
     },
+  },
+  TaskList: {
+    id: ({ _id, id }) => _id || id,
+    progress: () => 0,
+    users: async ({ userIds }, _, { db }) =>
+      Promise.all(
+        userIds.map((userIds) =>
+          db.collection("Users").findOne({ _id: ObjectId(userIds) })
+        )
+      ),
   },
 };
 
