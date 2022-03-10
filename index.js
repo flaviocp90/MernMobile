@@ -232,7 +232,7 @@ const resolvers = {
           _id: ObjectId(data.id),
         },
         {
-          $set: data
+          $set: data,
         }
       );
       return await db.collection("ToDo").findOne({ _id: ObjectId(data.id) });
@@ -254,7 +254,18 @@ const resolvers = {
   },
   TaskList: {
     id: ({ _id, id }) => _id || id,
-    progress: () => 0,
+    progress: async ({ _id }, _, { db }) => {
+      const todos = await db
+        .collection("ToDo")
+        .find({ taskListId: ObjectId(_id) })
+        .toArray();
+      const completed = todos.filter((todo) => todo.isCompleted == true);
+
+      if (todos.length === 0) {
+        return 0;
+      }
+      return (100 * completed.length) / todos.length;
+    },
     users: async ({ userIds }, _, { db }) =>
       Promise.all(
         userIds.map((userIds) =>
