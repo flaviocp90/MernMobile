@@ -32,6 +32,7 @@ const typeDefs = gql`
     createTaskList(title: String!): TaskList!
     updateTaskList(id: ID!, title: String!): TaskList!
     deleteTaskList(id: ID!): Boolean!
+    addUserToTaskList(taskListId: ID!, userId: ID!): TaskList!
   }
 
   input SignUpInput {
@@ -85,13 +86,14 @@ const resolvers = {
         .find({ userIds: user._id })
         .toArray();
     },
-    getTaskList: async (_, {id}, {db, user}) => {
+    getTaskList: async (_, { id }, { db, user }) => {
       if (!user) {
         throw new Error("Authentication Error. Please sign in");
       }
-      return await await db.collection("TaskList").findOne({ _id: ObjectId(id) });
-    }
-
+      return await await db
+        .collection("TaskList")
+        .findOne({ _id: ObjectId(id) });
+    },
   },
   Mutation: {
     signUp: async (_, { input }, { db }) => {
@@ -141,6 +143,35 @@ const resolvers = {
         .findOne({ _id: result.insertedId });
 
       return task;
+    },
+    addUserToTaskList: async (_, { taskListId, userId }, { db, user }) => {
+      if (!user) {
+        throw new Error("Authentication Error. Please sign in");
+      }
+
+      const taskList = await db
+        .collection("TaskList")
+        .findOne({ _id: ObjectId(taskListId) });
+      if (!taskList) {
+        return null;
+      }
+      if (
+        taskList.userIds.find((dbId) => dbId.toString() === userId.toString())
+      ) {
+        return taskList;
+      }
+      await db.collection("TaskList").updateOne(
+        {
+          _id: ObjectId(taskListId),
+        },
+        {
+          $push: {
+            userIds: ObjectId(userId),
+          },
+        }
+      );
+      taskList.userIds.push(ObjectId(userId))
+      return taskList
     },
     updateTaskList: async (_, { id, title }, { db, user }) => {
       if (!user) {
