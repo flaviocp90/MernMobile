@@ -33,6 +33,12 @@ const ToDoItem = ({ todo, onSubmit }: ToDoItemProps) => {
     }
   }, [input]);
 
+  const onKeyPress = ({nativeEvent}) => {
+    if(nativeEvent.key === 'Backspace' && content === '') {
+        console.warn('delete item')
+    }
+  }
+
   return (
     <View style={styles.elementContainer}>
       <Checkbox
@@ -49,6 +55,7 @@ const ToDoItem = ({ todo, onSubmit }: ToDoItemProps) => {
         onChangeText={setContent}
         onSubmitEditing={onSubmit}
         blurOnSubmit
+        onKeyPress={onKeyPress}
       />
     </View>
   );

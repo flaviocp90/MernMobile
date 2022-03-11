@@ -1,17 +1,22 @@
-import { FlatList, StyleSheet, TextInput } from "react-native";
+import {
+  FlatList,
+  StyleSheet,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform
+} from "react-native";
 import React, { useState } from "react";
 
-import { View } from "../components/Themed";
 import { RootTabScreenProps } from "../types";
 import ToDoItem from "../components/ToDoItem/ToDoItem";
+let id: "4";
 
 export default function TabOneScreen({
   navigation,
 }: RootTabScreenProps<"TabOne">) {
-  let id: "4";
   const [todos, setTodos] = useState([
     {
-      id: "1",
+      id: id,
       content: "Buy apple",
       isCompleted: true,
     },
@@ -35,30 +40,34 @@ export default function TabOneScreen({
   const createNewItem = (atIndex: number) => {
     const newTodos = [...todos];
     newTodos.splice(atIndex, 0, {
-      id: "4",
+      id: id,
       content: "",
-      isCompleted: "",
+      isCompleted: false,
     });
     setTodos(newTodos);
   };
   const [title, setTitle] = useState("");
 
   return (
-    <View style={styles.container}>
-      <TextInput
-        style={styles.title}
-        value={title}
-        onChangeText={setTitle}
-        placeholder={"Title"}
-      />
-      <FlatList
-        data={todos}
-        renderItem={({ item, index }) => (
-          <ToDoItem todo={item} onSubmit={() => createNewItem(index + 1)} />
-        )}
-        style={{ width: "100%" }}
-      />
-    </View>
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }}
+        behavior={"position"}
+        keyboardVerticalOffset={-80}
+      >
+        <TextInput
+          style={styles.title}
+          value={title}
+          onChangeText={setTitle}
+          placeholder={"Title"}
+        />
+        <FlatList
+          data={todos}
+          renderItem={({ item, index }) => (
+            <ToDoItem todo={item} onSubmit={() => createNewItem(index + 1)} />
+          )}
+          style={{ width: "100%" }}
+        />
+      </KeyboardAvoidingView>
   );
 }
 
@@ -72,6 +81,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: "white",
     fontWeight: "bold",
-    marginBottom: 12
+    marginBottom: 12,
   },
 });
