@@ -12,6 +12,7 @@ import ProjectsScreen from "../screens/ProjectScreen/ProjectsScreen";
 import ToDoScreen from "../screens/ToDoScreen/ToDoScreen";
 import SignInScreen from "../screens/SignInScreen/SignInScreen";
 import SignUpScreen from "../screens/SignupScreen/SignUpScreen";
+import SplashScreen from "../screens/SplashScreen/SplashScreen";
 import { RootStackParamList } from "../types";
 import LinkingConfiguration from "./LinkingConfiguration";
 
@@ -34,7 +35,14 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function RootNavigator() {
   return (
-    <Stack.Navigator initialRouteName="SignInScreen">
+    <Stack.Navigator initialRouteName="SplahScreen">
+      <Stack.Screen
+        name="SplahScreen"
+        component={SplashScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
       <Stack.Screen
         name="SignInScreen"
         component={SignInScreen}
@@ -50,12 +58,24 @@ function RootNavigator() {
         }}
       />
 
-      <Stack.Screen name="Home" component={ProjectsScreen} />
-      <Stack.Screen name="ToDoScreen" component={ToDoScreen} />
+      <Stack.Screen
+        name="Home"
+        component={ProjectsScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="ToDoScreen"
+        component={ToDoScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
       <Stack.Screen
         name="NotFound"
         component={NotFoundScreen}
-        options={{ title: "Oops!" }}
+        options={{ title: "Oops!" , headerShown: false}}
       />
     </Stack.Navigator>
   );
