@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { StyleSheet, FlatList } from "react-native";
 
-import ProjectItem from "../components/ProjectItem/ProjectItem";
-import { View } from "../components/Themed";
+import ProjectItem from "../../components/ProjectItem/ProjectItem";
+import { View } from "../../components/Themed";
+import styles from "./ProjectsScreen.style";
 
-export default function TabTwoScreen() {
+export default function ProjectsScreen() {
   const [project, setProjects] = useState([{
     id: '1',
     title: 'Project 1',
@@ -30,11 +31,3 @@ export default function TabTwoScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
