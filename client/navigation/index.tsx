@@ -61,9 +61,7 @@ function RootNavigator() {
       <Stack.Screen
         name="Home"
         component={ProjectsScreen}
-        options={{
-          headerShown: false,
-        }}
+
       />
       <Stack.Screen
         name="ToDoScreen"
