@@ -1,32 +1,35 @@
-import { useState } from "react";
-import { StyleSheet, FlatList } from "react-native";
+import { useEffect, useState } from "react";
+import { Alert, FlatList } from "react-native";
+import { useQuery } from "@apollo/client";
 
 import ProjectItem from "../../components/ProjectItem/ProjectItem";
 import { View } from "../../components/Themed";
 import styles from "./ProjectsScreen.style";
+import { MY_PROJECTS } from "../../graphql/Query/taskList";
 
 export default function ProjectsScreen() {
-  const [project, setProjects] = useState([{
-    id: '1',
-    title: 'Project 1',
-    createdAt: '2d'
-  },{
-    id: '2',
-    title: 'Project 2',
-    createdAt: '7d'
-  },{
-    id: '3',
-    title: 'Project 3',
-    createdAt: '5d'
-  },
-]);
+  const [project, setProjects] = useState([]);
+
+  const { data, error, loading } = useQuery(MY_PROJECTS);
+
+  useEffect(() => {
+    if (error) {
+      Alert.alert("Error fetching projects", error.message);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (data) {
+      setProjects(data.myTaskLists);
+    }
+  }, [data]);
 
   return (
     <View style={styles.container}>
-      <FlatList 
+      <FlatList
         data={project}
-        renderItem={({item}) => <ProjectItem project={item}/>}
-        style={{width: '100%'}}
+        renderItem={({ item }) => <ProjectItem project={item} />}
+        style={{ width: "100%" }}
       />
     </View>
   );
